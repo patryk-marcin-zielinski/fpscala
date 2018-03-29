@@ -7,13 +7,13 @@ sealed trait Stream[+A] {
 
   def toList: List[A] = this match {
     case Cons(head, tail) => head() :: tail().toList
-    case End => Nil
+    case Empty => Nil
   }
 
   def getTail: Stream[A] = {
     this match {
       case Cons(_, tail) => tail();
-      case End => End;
+      case Empty => Empty;
     }
   }
 
@@ -29,13 +29,14 @@ sealed trait Stream[+A] {
     Stream.takeWhile_1(this)(p)
   }
 
+
   def exists(p: A => Boolean): Boolean = Stream.foldRight(this, false)((a, b) => p(a) || b)
 
   def forAll(p: A => Boolean): Boolean = Stream.foldRight(this, true)((a, b) => p(a) && b)
 
-  def filter(p: A => Boolean): Stream[A] = Stream.foldRight[A, Stream[A]](this, End)((a,acc) => if(p(a)) Stream.cons(a, acc) else acc )
+  def filter(p: A => Boolean): Stream[A] = Stream.foldRight[A, Stream[A]](this, Empty)((a, acc) => if(p(a)) Stream.cons(a, acc) else acc )
 
-  def map[B](f: A => B): Stream[B] = Stream.foldRight[A, Stream[B]](this, End)((a,acc) => Stream.cons(f(a), acc))
+  def map[B](f: A => B): Stream[B] = Stream.foldRight[A, Stream[B]](this, Empty)((a, acc) => Stream.cons(f(a), acc))
 
   def append[E >: A](as: => Stream[E]) : Stream[E] = {
     Stream.foldRight(this, as)((a, acc) => Stream.cons(a, acc))
@@ -46,14 +47,14 @@ sealed trait Stream[+A] {
    * Cons(() => 2, () => foldRight(Stream(2,3,4,5), () => End)(f(a) = Stream(a+1)))
    */
   def flatMap[B](f: A => Stream[B]) : Stream[B] = {
-    Stream.foldRight[A, Stream[B]](this, End)((a, acc) => f(a).append(acc))
+    Stream.foldRight[A, Stream[B]](this, Empty)((a, acc) => f(a).append(acc))
   }
 
 }
 
 case class Cons[+A](head: () => A, tail: () => Stream[A]) extends Stream[A]
 
-case object End extends Stream[Nothing]
+case object Empty extends Stream[Nothing]
 
 object Stream {
 
@@ -64,18 +65,18 @@ object Stream {
     Cons(() => evalHead, () => evalTail)
   }
 
-  def end[A]: Stream[A] = End
+  def end[A]: Stream[A] = Empty
 
   def foldRight[A, B](st: Stream[A], acc: => B)(f: (A, => B) => B): B = {
     st match {
       case Cons(head, tail) => f(head(), foldRight[A, B](tail(), acc)(f))
-      case End => acc
+      case Empty => acc
     }
   }
 
   def drop[A](as: Stream[A], nth: Int): Stream[A] = {
     as match {
-      case End => End
+      case Empty => Empty
       case stream@Cons(_, _) if nth == 0 => stream;
       case Cons(_, tail) => drop(tail(), nth - 1)
     }
@@ -84,20 +85,20 @@ object Stream {
 
   def take[A](as: Stream[A], nth: Int): Stream[A] = {
     as match {
-      case Cons(head, tail) if nth > 0 => Cons(head, () => take[A](tail(), nth - 1))
-      case _ => End
+      case Cons(head, tail) if nth > 0 => Stream.cons(head(), take[A](tail(), nth - 1))
+      case _ => Empty
     }
   }
 
   def takeWhile_1[A](as: Stream[A])(p: A => Boolean): Stream[A] = {
     as match {
       case Cons(head, tail) if p(head()) => Stream.cons(head(), takeWhile_1(tail())(p))
-      case _ => End
+      case _ => Empty
     }
   }
 
   def takeWhile_2[A](as: Stream[A])(p: A => Boolean): Stream[A] = {
-    foldRight[A, Stream[A]](as, End)((a, acc) => if (p(a)) Stream.cons(a, acc) else End)
+    foldRight[A, Stream[A]](as, Empty)((a, acc) => if (p(a)) Stream.cons(a, acc) else Empty)
   }
 
 
@@ -114,7 +115,7 @@ object Stream {
   def unfold[A, S](z: S)(f: S => Option[(A, S)]): Stream[A] = {
     f(z)
         .map(state =>  Stream.cons(state._1, unfold(state._2)(f)))
-        .getOrElse(End)
+        .getOrElse(Empty)
   }
 
   def mapViaUnfold[A, B](as: Stream[A], f: A => B): Stream[B] = {
@@ -171,7 +172,7 @@ object Stream {
   def scanRight_1[A, B](st: Stream[A], acc: => B)(f: (A, => B) => B) : Stream[B] = {
     tails(st)
         .map(tailStream => foldRight(tailStream, acc)((a,acc) => f(a, acc)))
-        .append(Stream.cons(acc, End))
+        .append(Stream.cons(acc, Empty))
   }
 
   def scanRight_2[A, B](st: Stream[A], acc: => B)(f: (A, => B) => B) : Stream[B] = {

@@ -8,7 +8,7 @@ class StreamTest extends FunSpec {
       val stream = Cons[Int](() => {
         x = x + 1
         x
-      }, () => End)
+      }, () => Empty)
       it("should be different values") {
         val h1 = stream.headOption;
         val h2 = stream.headOption;
@@ -20,7 +20,7 @@ class StreamTest extends FunSpec {
       val stream = Stream.cons[Int]({
         x = x + 1
         x
-      }, End)
+      }, Empty)
       it("should be different values") {
         val h1 = stream.headOption;
         val h2 = stream.headOption;
@@ -59,14 +59,14 @@ class StreamTest extends FunSpec {
     }
 
     describe("Given End:Stream") {
-      val stream123 = End
+      val stream123 = Empty
       describe("take 2 element") {
         it("should result in Stream(1,2)") {
           assertResult(stream123.take(2)) {
-            End
+            Empty
           }
           assertResult(Stream.takeViaUnfold(stream123, 2)) {
-            End
+            Empty
           }
         }
       }
@@ -78,7 +78,7 @@ class StreamTest extends FunSpec {
         headCallNumber = headCallNumber + 1
         headCallNumber
       }
-      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => End)))
+      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Empty)))
       describe("take 2 element") {
         it("should not evaluate last vale") {
           stream123.take(2).toList
@@ -109,7 +109,7 @@ class StreamTest extends FunSpec {
         headCallNumber
       }
       //      val stream123 = Stream(incX, incX, incX)
-      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => End)))
+      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Empty)))
       describe("drop 1 element") {
         it("should evaluate just two last value") {
           stream123.drop(1).toList
@@ -177,7 +177,7 @@ class StreamTest extends FunSpec {
         lazy val test = headCallNumber;
         test
       }
-      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => End)))))
+      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Empty)))))
       describe("take while  x > 1 element") {
         it("should evaluate all values") {
           stream123.takeWhile(_ < 2)
@@ -235,7 +235,7 @@ class StreamTest extends FunSpec {
         headCallNumber = headCallNumber + 1
         1
       }
-      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(() => 2, () => Cons(incX, () => End)))))
+      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(() => 2, () => Cons(incX, () => Empty)))))
       describe("take while  x > 1 element") {
         it("should stop when reach element bigger than 1") {
           stream123.forAll((a) => {
@@ -268,7 +268,7 @@ class StreamTest extends FunSpec {
         headCallNumber = headCallNumber + 1
         1
       }
-      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => End)))
+      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Empty)))
       describe("filter x == 1 element") {
         it("should evaluate first element and leave rest for more evaluation") {
           stream123.filter((a) => {
@@ -305,7 +305,7 @@ class StreamTest extends FunSpec {
         headCallNumber = headCallNumber + 1
         headCallNumber
       }
-      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => End)))))
+      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Empty)))))
       describe("map x + 1 element") {
         it("should evaluate first element and leave rest for more evaluation") {
           stream123.map(_ + 1)
@@ -322,7 +322,7 @@ class StreamTest extends FunSpec {
         headCallNumber = headCallNumber + 1
         headCallNumber
       }
-      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => End)))))
+      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Empty)))))
       describe("mapViaUnfold x + 1 element") {
         it("should evaluate first element and leave rest for more evaluation") {
           Stream.mapViaUnfold[Int, Int](stream123, _ + 1)
@@ -355,7 +355,7 @@ class StreamTest extends FunSpec {
         headCallNumber = headCallNumber + 1
         headCallNumber
       }
-      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => End)))))
+      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Empty)))))
       describe("flatMap every element to return Stream(1)") {
         it("should evaluate first element and leave rest for more evaluation") {
           stream123.flatMap(_ => Stream(1))
@@ -388,9 +388,9 @@ class StreamTest extends FunSpec {
         headCallNumber
       }
 
-      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => End)))))
+      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Empty)))))
       describe("append to Stream of inc header") {
-        val stream678 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => End)))))
+        val stream678 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Empty)))))
         it("should evaluate first element and leave rest for more evaluation") {
           stream123.append(stream678)
           assertResult(1) {
@@ -452,7 +452,7 @@ class StreamTest extends FunSpec {
         headCallNumber
       }
 
-      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => End)))))
+      val stream123 = Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Cons(incX, () => Empty)))))
       describe("zipWith infinity increment stream from(5)") {
         val stream678 = Stream.from(6)
         it("should evaluate first element and leave rest for more evaluation") {
