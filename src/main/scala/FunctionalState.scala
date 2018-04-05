@@ -15,23 +15,17 @@ case class SimpleRNG(seed: Long) extends RNG {
 }
 
 case class State[S,+A](run: S => (A,S)) {
+
   def map[B](f: A => B): State[S,B] = {
     flatMap(a => State.unit[S,B](f(a)))
   }
 
   def flatMap[B] (g: A => State[S,B]): State[S,B] = {
     State(state => {
-      println("Application flatMap")
-      println(state);
       val (a, stateA) = this.run(state)
       g(a).run(stateA)
     })
   }
-
-  def get: State[S, S] = State(s => (s, s))
-
-  def set(newState: S) : State[S, Unit] = State (_ => ((), newState))
-
 }
 
 
@@ -40,13 +34,16 @@ object State {
   def unit[S, A](a: A): State[S, A] = State(state => (a,state))
 
   def map2[S,A,B,C](ra: State[S,A], rb: State[S, B])(f: (A, B) => C): State[S, C] = {
-    println("map2")
     ra.flatMap(a => rb.map(b => f(a,b)))
   }
 
   def sequence[S, A](fs: List[State[S, A]]): State[S, List[A]] = {
     fs.foldRight[State[S, List[A]]](State(state => (List[A](), state)))((stateA, stateB) => stateB.flatMap(acc => stateA.map(a => a :: acc)))
   }
+
+  def get[S]: State[S, S] = State(s => (s, s))
+
+  def set[S](newState: S) : State[S, Unit] = State (_ => ((), newState))
 }
 
 

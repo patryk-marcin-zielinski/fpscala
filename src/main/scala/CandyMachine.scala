@@ -6,56 +6,41 @@ case class Machine(locked: Boolean, candies: Int, coins: Int)
 
 object Machine {
   def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = {
-    inputs.map {
-      case Coin => {
-        println("COIN")
-        State[Machine, (Int, Int)](machine => {
-          println("COINS ADDING")
-          println(machine)
-          val tuple = ((machine.coins+1, machine.candies), Machine(machine.locked, machine.candies, machine.coins+1))
-          print("Result")
-          println(tuple)
-          tuple
+    inputs
+        .map({
+          case Coin => insertCoin
+          case Turn => takeCandy
         })
-      }
-      case Turn => {
-        println("TURN")
-        State[Machine, (Int, Int)](machine => {
-          println("CANDY SUBSTRACTING")
-          println(machine)
-          val tuple  = ((machine.coins, machine.candies-1), Machine(machine.locked, machine.candies-1, machine.coins))
-          print("Result")
-          println(tuple)
-          tuple
-        })
-      }
-    }
-    .foldLeft(State[Machine, (Int, Int)](machine => ((machine.coins, machine.candies),machine)))((acc, state) => {
-      State.map2(acc, state)((res1, res2) => {
-        print("ACC = ")
-        println(res1)
-        print("Element = ")
-        println(res2)
-        res2
-      })
-    })
+        .foldLeft[State[Machine, (Int, Int)]](State(s => ((s.coins, s.candies), s)))((acc, s) => acc.flatMap(_ => s))
   }
 
-  def lock(state : State[Machine, (Int, Int)]) = {
-    modify(state)(machine => Machine(true, machine.candies, machine.coins))
+  def insertCoin : State[Machine, (Int, Int)] = {
+    for {
+      toLock <- State.get
+      _ <- State.set(addCoin(toLock))
+      machine <- State.get
+    } yield (machine.coins, machine.candies)
   }
 
-  def unlock(state : State[Machine, (Int, Int)]) = {
-    modify(state)(machine => Machine(false, machine.candies, machine.coins))
+  def takeCandy : State[Machine, (Int, Int)]  = {
+    for {
+      toUnlock <- State.get
+      _ <- State.set(decreaseCandy(toUnlock))
+      machine <- State.get
+    } yield (machine.coins, machine.candies)
   }
 
-  def modify(state : State[Machine, (Int, Int)])(f: Machine => Machine) : State[Machine, (Int, Int)] = {
-    state.get
-      .flatMap(machine => state.set(f(machine))
-        .map((_) => (machine.coins, machine.candies))
-      )
+  def addCoin(machine: Machine) : Machine = machine match {
+    case Machine(false, _, _) => machine
+    case Machine(_, 0, _) => machine
+    case Machine(_, candies, coins) => Machine(locked = false, candies, coins + 1)
   }
 
+  def decreaseCandy(machine: Machine): Machine = machine match {
+    case Machine(true, _, _) => machine
+    case Machine(_, 0, _) => machine
+    case Machine(_, candies, coins) => Machine(locked = true, candies - 1, coins)
+  }
 
 }
 

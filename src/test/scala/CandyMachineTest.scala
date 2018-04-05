@@ -10,7 +10,7 @@ import org.scalatest.FunSpec
 
 class CandyMachineTest extends FunSpec{
 
-  describe("Candy machine") {
+  describe("Candy machine with 1 candies and 0 coins") {
     val candyMachine = Machine(true, 1,0)
     describe("when single coin dropped") {
       val result = Machine.simulateMachine(List(Coin)).run(candyMachine)
@@ -29,10 +29,21 @@ class CandyMachineTest extends FunSpec{
 
     describe("when drop a coin and turn knob") {
       val state = Machine.simulateMachine(List(Coin, Turn))
-      println(state);
       val result = state.run(candyMachine)
       it("should take coing and drop candy") {
         assertResult(result._1) {(1,0)}
+        assertResult(result._2.locked) {true}
+      }
+    }
+  }
+
+  describe("Candy machine with 5 candies, 10 coins"){
+    val candyMachine = Machine(true, 5,10)
+    describe("when pay and take for 4 candies") {
+      val state = Machine.simulateMachine(List(Coin, Turn, Coin, Turn, Coin, Turn, Coin, Turn))
+      val result = state.run(candyMachine)
+      it("should have 14 coins and 1 candies") {
+        assertResult(result._1) {(14,1)}
         assertResult(result._2.locked) {true}
       }
     }
